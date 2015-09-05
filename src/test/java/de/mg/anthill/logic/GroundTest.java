@@ -1,3 +1,18 @@
+/* 
+ * Copyright 2015 Michael Gnatz.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.mg.anthill.logic;
 
 import java.util.Arrays;
@@ -10,11 +25,6 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
 
-import de.mg.anthill.logic.Ant;
-import de.mg.anthill.logic.AntCommunication;
-import de.mg.anthill.logic.Cell;
-import de.mg.anthill.logic.Ground;
-import de.mg.anthill.logic.Position;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -34,135 +44,135 @@ import static org.powermock.api.mockito.PowerMockito.whenNew;
 @PrepareForTest(Ground.class)
 public class GroundTest {
 
-	@Test
-	public void ground_initialized_with_ants() throws Exception {
+    @Test
+    public void ground_initialized_with_ants() throws Exception {
 
-		// mock setup
-		whenNew(Ant.class).withAnyArguments().thenReturn(mock(Ant.class));
+        // mock setup
+        whenNew(Ant.class).withAnyArguments().thenReturn(mock(Ant.class));
 
-		Random randomMock = mock(Random.class);
-		when(randomMock.nextInt(anyInt())).thenReturn(3);
-		whenNew(Random.class).withAnyArguments().thenReturn(randomMock);
+        Random randomMock = mock(Random.class);
+        when(randomMock.nextInt(anyInt())).thenReturn(3);
+        whenNew(Random.class).withAnyArguments().thenReturn(randomMock);
 
-		// WHEN a ground of size 30x20 with 20 ants is initialized
-		Ground ground = new Ground(30, 20, 20);
+        // WHEN a ground of size 30x20 with 20 ants is initialized
+        Ground ground = new Ground(30, 20, 20);
 
-		// THEN the ground is of size 30x20
-		assertThat(ground.getMatrix().length, equalTo(30));
-		assertThat(ground.getMatrix()[0].length, equalTo(20));
+        // THEN the ground is of size 30x20
+        assertThat(ground.getMatrix().length, equalTo(30));
+        assertThat(ground.getMatrix()[0].length, equalTo(20));
 
-		// THEN 20 ants have been created
-		verifyNew(Ant.class, times(20)).withArguments(3, 3, ground, ground);
+        // THEN 20 ants have been created
+        verifyNew(Ant.class, times(20)).withArguments(3, 3, ground, ground);
 
-		// THEN the ground contains 20 ants
-		int amount = 0;
-		Cell[][] matrix = ground.getMatrix();
-		for (int x = 0; x < 30; x++)
-			for (int y = 0; y < 20; y++)
-				amount += matrix[x][y].getAmountOfAnts();
-		// only > 0 since always the same ant is placed, maybe on the same cell
-		assertTrue(amount > 0);
+        // THEN the ground contains 20 ants
+        int amount = 0;
+        Cell[][] matrix = ground.getMatrix();
+        for (int x = 0; x < 30; x++) {
+            for (int y = 0; y < 20; y++) {
+                amount += matrix[x][y].getAmountOfAnts();
+            }
+        }
+        // only > 0 since always the same ant is placed, maybe on the same cell
+        assertTrue(amount > 0);
 
-		// THEN the middle (15,10) contains the home base
-		assertTrue(matrix[15][10].isHomeBase());
-		assertTrue(ground.isAtHomeBase(new Position(15, 10)));
+        // THEN the middle (15,10) contains the home base
+        assertTrue(matrix[15][10].isHomeBase());
+        assertTrue(ground.isAtHomeBase(new Position(15, 10)));
 
-		// THEN the any other cell (9,9) contains NOT the home base
-		assertFalse(matrix[9][9].isHomeBase());
-		assertFalse(ground.isAtHomeBase(new Position(9, 9)));
-	}
+        // THEN the any other cell (9,9) contains NOT the home base
+        assertFalse(matrix[9][9].isHomeBase());
+        assertFalse(ground.isAtHomeBase(new Position(9, 9)));
+    }
 
-	@Test
-	public void add_food_to_ground() throws Exception {
+    @Test
+    public void add_food_to_ground() throws Exception {
 
-		Cell cell = mock(Cell.class);
-		whenNew(Cell.class).withAnyArguments().thenReturn(cell);
+        Cell cell = mock(Cell.class);
+        whenNew(Cell.class).withAnyArguments().thenReturn(cell);
 
-		Random random = mock(Random.class);
-		whenNew(Random.class).withAnyArguments().thenReturn(random);
-		when(random.nextInt(anyInt())).thenReturn(1);
+        Random random = mock(Random.class);
+        whenNew(Random.class).withAnyArguments().thenReturn(random);
+        when(random.nextInt(anyInt())).thenReturn(1);
 
-		// GIVEN some ground
-		Ground ground = new Ground(30, 20, 20);
+        // GIVEN some ground
+        Ground ground = new Ground(30, 20, 20);
 
 		// WHEN up to 10 units of food (randomly) are added 5 times to the
-		// ground at random places
-		ground.addFood(5, 10);
+        // ground at random places
+        ground.addFood(5, 10);
 
-		// THEN all the food has been added to ground cells
-		verify(cell, times(5)).addFood(1);
-	}
+        // THEN all the food has been added to ground cells
+        verify(cell, times(5)).addFood(1);
+    }
 
-	@Test
-	public void not_all_directions_are_possible() {
+    @Test
+    public void not_all_directions_are_possible() {
 
-		// GIVEN some ground
-		Ground ground = new Ground(5, 5, 0);
+        // GIVEN some ground
+        Ground ground = new Ground(5, 5, 0);
 
 		// THEN for a given position only certain directions are possibe
+        assertThat(ground.getPossibleDirections(new Position(2, 2)).length,
+                equalTo(8));
 
-		assertThat(ground.getPossibleDirections(new Position(2, 2)).length,
-				equalTo(8));
+        assertThat(
+                Arrays.asList(ground.getPossibleDirections(new Position(0, 0))),
+                not(hasItems(new Position(-1, 0), new Position(0, -1),
+                                new Position(-1, -1))));
 
-		assertThat(
-				Arrays.asList(ground.getPossibleDirections(new Position(0, 0))),
-				not(hasItems(new Position(-1, 0), new Position(0, -1),
-						new Position(-1, -1))));
+        assertThat(
+                Arrays.asList(ground.getPossibleDirections(new Position(4, 4))),
+                not(hasItems(new Position(1, 0), new Position(0, 1),
+                                new Position(1, 1))));
 
-		assertThat(
-				Arrays.asList(ground.getPossibleDirections(new Position(4, 4))),
-				not(hasItems(new Position(1, 0), new Position(0, 1),
-						new Position(1, 1))));
+        assertThat(
+                Arrays.asList(ground.getPossibleDirections(new Position(1, 4))),
+                not(hasItems(new Position(1, 1), new Position(0, 1))));
 
-		assertThat(
-				Arrays.asList(ground.getPossibleDirections(new Position(1, 4))),
-				not(hasItems(new Position(1, 1), new Position(0, 1))));
+        // testing not really complete here
+    }
 
-		// testing not really complete here
-	}
+    @Test
+    public void dropped_food_is_availabe() {
 
-	@Test
-	public void dropped_food_is_availabe() {
+        // GIVEN position on ground without food
+        Ground ground = new Ground(5, 5, 0);
+        assertFalse(ground.foodAvailable(new Position(1, 1)));
 
-		// GIVEN position on ground without food
-		Ground ground = new Ground(5, 5, 0);
-		assertFalse(ground.foodAvailable(new Position(1, 1)));
+        // WHEN food is dropped
+        ground.dropFood(new Position(1, 1));
 
-		// WHEN food is dropped
-		ground.dropFood(new Position(1, 1));
+        // THEN food is available
+        assertTrue(ground.foodAvailable(new Position(1, 1)));
+    }
 
-		// THEN food is available
-		assertTrue(ground.foodAvailable(new Position(1, 1)));
-	}
+    @Test
+    public void taken_food_is_not_available() {
 
-	@Test
-	public void taken_food_is_not_available() {
+        // GIVEN position on ground with food
+        Ground ground = new Ground(5, 5, 0);
+        ground.dropFood(new Position(1, 1));
+        assertTrue(ground.foodAvailable(new Position(1, 1)));
 
-		// GIVEN position on ground with food
-		Ground ground = new Ground(5, 5, 0);
-		ground.dropFood(new Position(1, 1));
-		assertTrue(ground.foodAvailable(new Position(1, 1)));
+        // WHEN food is taken
+        ground.takeFood(new Position(1, 1));
 
-		// WHEN food is taken
-		ground.takeFood(new Position(1, 1));
+        // THEN no food is available
+        assertFalse(ground.foodAvailable(new Position(1, 1)));
+    }
 
-		// THEN no food is available
-		assertFalse(ground.foodAvailable(new Position(1, 1)));
-	}
-
-	@Test
-	public void ground_can_provide_other_ants_on_same_position() {
+    @Test
+    public void ground_can_provide_other_ants_on_same_position() {
 
 		// stupid test?
+        // GIVEN 10 ants on cell 1,1
+        Ground ground = new Ground(1, 1, 10);
 
-		// GIVEN 10 ants on cell 1,1
-		Ground ground = new Ground(1, 1, 10);
-
-		// THEN the other ants can be provided
-		@SuppressWarnings("unchecked")
-		Set<Ant> ants = (Set<Ant>) Whitebox.getInternalState(ground, "ants");
-		Ant anyAnt = ants.iterator().next();
-		Set<AntCommunication> other = ground.getOtherAnts(anyAnt);
-		assertEquals(9, other.size());
-	}
+        // THEN the other ants can be provided
+        @SuppressWarnings("unchecked")
+        Set<Ant> ants = (Set<Ant>) Whitebox.getInternalState(ground, "ants");
+        Ant anyAnt = ants.iterator().next();
+        Set<AntCommunication> other = ground.getOtherAnts(anyAnt);
+        assertEquals(9, other.size());
+    }
 }
